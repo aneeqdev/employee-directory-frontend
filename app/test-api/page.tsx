@@ -9,6 +9,9 @@ export default function TestApiPage() {
   const [corsTestStatus, setCorsTestStatus] = useState<string>("Not tested")
   const [corsTestData, setCorsTestData] = useState<any>(null)
   const [corsTestError, setCorsTestError] = useState<string>("")
+  const [simpleTestStatus, setSimpleTestStatus] = useState<string>("Not tested")
+  const [simpleTestData, setSimpleTestData] = useState<any>(null)
+  const [simpleTestError, setSimpleTestError] = useState<string>("")
 
   useEffect(() => {
     const testApi = async () => {
@@ -58,8 +61,31 @@ export default function TestApiPage() {
       }
     }
 
+    const testSimple = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1"
+        console.log("Testing simple fetch:", `${apiUrl}/employees/test`)
+        
+        // Simple fetch without any headers
+        const response = await fetch(`${apiUrl}/employees/test`)
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const result = await response.json()
+        setSimpleTestData(result)
+        setSimpleTestStatus("Success")
+      } catch (err) {
+        console.error("Simple Test Error:", err)
+        setSimpleTestError(err instanceof Error ? err.message : "Unknown error")
+        setSimpleTestStatus("Failed")
+      }
+    }
+
     testApi()
     testCors()
+    testSimple()
   }, [])
 
   return (
@@ -91,7 +117,7 @@ export default function TestApiPage() {
 
         {/* CORS Test */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">CORS Test: {corsTestStatus}</h2>
+          <h2 className="text-xl font-semibold mb-4">CORS Test (with headers): {corsTestStatus}</h2>
           
           {corsTestError && (
             <div className="bg-red-50 border border-red-200 rounded p-4 mb-4">
@@ -103,6 +129,24 @@ export default function TestApiPage() {
             <div className="bg-green-50 border border-green-200 rounded p-4">
               <strong>CORS Response:</strong>
               <pre className="mt-2 text-sm overflow-auto">{JSON.stringify(corsTestData, null, 2)}</pre>
+            </div>
+          )}
+        </div>
+
+        {/* Simple Test */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4">Simple Test (no headers): {simpleTestStatus}</h2>
+          
+          {simpleTestError && (
+            <div className="bg-red-50 border border-red-200 rounded p-4 mb-4">
+              <strong>Simple Error:</strong> {simpleTestError}
+            </div>
+          )}
+          
+          {simpleTestData && (
+            <div className="bg-green-50 border border-green-200 rounded p-4">
+              <strong>Simple Response:</strong>
+              <pre className="mt-2 text-sm overflow-auto">{JSON.stringify(simpleTestData, null, 2)}</pre>
             </div>
           )}
         </div>
@@ -122,6 +166,16 @@ export default function TestApiPage() {
             <li>• Verify environment variables are set in Vercel</li>
             <li>• Test the backend directly: <a href={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1"}/employees/test`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Test Endpoint</a></li>
             <li>• Check Vercel function logs for backend errors</li>
+            <li>• Try opening the API URL directly in a new tab</li>
+          </ul>
+        </div>
+
+        <div className="bg-purple-50 border border-purple-200 rounded p-4 mt-4">
+          <h3 className="font-semibold mb-2">Direct API Links:</h3>
+          <ul className="text-sm space-y-1">
+            <li>• <a href={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1"}/employees/test`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Test Endpoint</a></li>
+            <li>• <a href={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1"}/employees?page=1&limit=5`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Employees List</a></li>
+            <li>• <a href={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1"}/docs`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">API Documentation</a></li>
           </ul>
         </div>
       </div>

@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1",
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "https://employee-directory-backend.vercel.app/api/v1",
   },
   eslint: {
     ignoreDuringBuilds: true,
@@ -18,7 +18,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_API_URL || 'https://employee-directory-backend.vercel.app/api/v1'}/:path*`,
       },
     ]
   },

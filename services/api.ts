@@ -1,6 +1,16 @@
 import type { Employee, CreateEmployeeDto, UpdateEmployeeDto, EmployeeFilters } from "@/types/employee"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1"
+// Use hardcoded production URL as fallback to avoid environment variable issues
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    // Client-side: use environment variable or fallback to production URL
+    return process.env.NEXT_PUBLIC_API_URL || "https://employee-directory-backend.vercel.app/api/v1"
+  }
+  // Server-side: use environment variable or localhost
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1"
+}
+
+const API_BASE_URL = getApiBaseUrl()
 
 interface PaginatedResponse<T> {
   data: T[]
@@ -39,12 +49,24 @@ export const employeeApi = {
     if (params.department) searchParams.append("department", params.department)
     if (params.location) searchParams.append("location", params.location)
 
-    const response = await fetch(`${API_BASE_URL}/employees?${searchParams}`)
+    console.log('Making API request to:', `${API_BASE_URL}/employees?${searchParams}`)
+    
+    const response = await fetch(`${API_BASE_URL}/employees?${searchParams}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
     return handleResponse(response)
   },
 
   async getEmployee(id: string): Promise<Employee> {
-    const response = await fetch(`${API_BASE_URL}/employees/${id}`)
+    const response = await fetch(`${API_BASE_URL}/employees/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
     return handleResponse(response)
   },
 
@@ -73,6 +95,9 @@ export const employeeApi = {
   async deleteEmployee(id: string): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/employees/${id}`, {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
     })
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: "Unknown error" }))
