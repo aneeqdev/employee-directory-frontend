@@ -1,16 +1,7 @@
 import type { Employee, CreateEmployeeDto, UpdateEmployeeDto, EmployeeFilters } from "@/types/employee"
 
-// Use proxy URL to bypass CORS
-const getApiBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    // Client-side: use proxy URL to bypass CORS
-    return process.env.NEXT_PUBLIC_API_URL || "/api/proxy"
-  }
-  // Server-side: use direct backend URL
-  return process.env.NEXT_PUBLIC_API_URL || "https://employee-directory-backend.vercel.app/api/v1"
-}
-
-const API_BASE_URL = getApiBaseUrl()
+// Force use of proxy URL to bypass CORS
+const API_BASE_URL = "/api/proxy"
 
 interface PaginatedResponse<T> {
   data: T[]
@@ -49,9 +40,10 @@ export const employeeApi = {
     if (params.department) searchParams.append("department", params.department)
     if (params.location) searchParams.append("location", params.location)
 
-    console.log('Making API request to:', `${API_BASE_URL}/employees?${searchParams}`)
+    const url = `${API_BASE_URL}/employees?${searchParams}`
+    console.log('Making API request to:', url)
     
-    const response = await fetch(`${API_BASE_URL}/employees?${searchParams}`, {
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -61,7 +53,10 @@ export const employeeApi = {
   },
 
   async getEmployee(id: string): Promise<Employee> {
-    const response = await fetch(`${API_BASE_URL}/employees/${id}`, {
+    const url = `${API_BASE_URL}/employees/${id}`
+    console.log('Making API request to:', url)
+    
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -71,7 +66,10 @@ export const employeeApi = {
   },
 
   async createEmployee(data: CreateEmployeeDto): Promise<Employee> {
-    const response = await fetch(`${API_BASE_URL}/employees`, {
+    const url = `${API_BASE_URL}/employees`
+    console.log('Making API request to:', url)
+    
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -82,7 +80,10 @@ export const employeeApi = {
   },
 
   async updateEmployee(id: string, data: UpdateEmployeeDto): Promise<Employee> {
-    const response = await fetch(`${API_BASE_URL}/employees/${id}`, {
+    const url = `${API_BASE_URL}/employees/${id}`
+    console.log('Making API request to:', url)
+    
+    const response = await fetch(url, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -93,7 +94,10 @@ export const employeeApi = {
   },
 
   async deleteEmployee(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/employees/${id}`, {
+    const url = `${API_BASE_URL}/employees/${id}`
+    console.log('Making API request to:', url)
+    
+    const response = await fetch(url, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
