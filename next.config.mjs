@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "https://employee-directory-backend.vercel.app/api/v1",
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "/api/proxy",
   },
   eslint: {
     ignoreDuringBuilds: true,
@@ -17,8 +17,8 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'https://employee-directory-backend.vercel.app/api/v1'}/:path*`,
+        source: '/api/proxy/:path*',
+        destination: 'https://employee-directory-backend.vercel.app/api/v1/:path*',
       },
     ]
   },

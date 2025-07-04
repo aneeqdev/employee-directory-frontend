@@ -1,13 +1,13 @@
 import type { Employee, CreateEmployeeDto, UpdateEmployeeDto, EmployeeFilters } from "@/types/employee"
 
-// Use hardcoded production URL as fallback to avoid environment variable issues
+// Use proxy URL to bypass CORS
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    // Client-side: use environment variable or fallback to production URL
-    return process.env.NEXT_PUBLIC_API_URL || "https://employee-directory-backend.vercel.app/api/v1"
+    // Client-side: use proxy URL to bypass CORS
+    return process.env.NEXT_PUBLIC_API_URL || "/api/proxy"
   }
-  // Server-side: use environment variable or localhost
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1"
+  // Server-side: use direct backend URL
+  return process.env.NEXT_PUBLIC_API_URL || "https://employee-directory-backend.vercel.app/api/v1"
 }
 
 const API_BASE_URL = getApiBaseUrl()

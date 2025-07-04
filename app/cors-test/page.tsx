@@ -8,79 +8,85 @@ export default function CorsTestPage() {
   useEffect(() => {
     const runTests = async () => {
       const results = []
-      const apiUrl = "https://employee-directory-backend.vercel.app/api/v1"
       
-      // Test 1: Simple GET request
+      // Test 1: Proxy request
       try {
-        console.log("Test 1: Simple GET request")
-        const response = await fetch(`${apiUrl}/employees/cors-test`)
+        console.log("Test 1: Proxy request")
+        const response = await fetch('/api/proxy/employees/cors-test')
         if (response.ok) {
           const data = await response.json()
           results.push({
-            test: "Simple GET",
+            test: "Proxy GET",
             status: "✅ Success",
             data
           })
         } else {
           results.push({
-            test: "Simple GET",
+            test: "Proxy GET",
             status: "❌ Failed",
             error: `HTTP ${response.status}`
           })
         }
       } catch (error) {
         results.push({
-          test: "Simple GET",
+          test: "Proxy GET",
           status: "❌ Failed",
           error: error instanceof Error ? error.message : "Unknown error"
         })
       }
 
-      // Test 2: GET with headers
+      // Test 2: Direct backend request (should fail with CORS)
       try {
-        console.log("Test 2: GET with headers")
-        const response = await fetch(`${apiUrl}/employees/cors-test`, {
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        })
+        console.log("Test 2: Direct backend request")
+        const response = await fetch('https://employee-directory-backend.vercel.app/api/v1/employees/cors-test')
         if (response.ok) {
           const data = await response.json()
           results.push({
-            test: "GET with headers",
-            status: "✅ Success",
+            test: "Direct Backend GET",
+            status: "✅ Success (CORS fixed!)",
             data
           })
         } else {
           results.push({
-            test: "GET with headers",
+            test: "Direct Backend GET",
             status: "❌ Failed",
             error: `HTTP ${response.status}`
           })
         }
       } catch (error) {
         results.push({
-          test: "GET with headers",
-          status: "❌ Failed",
+          test: "Direct Backend GET",
+          status: "❌ Failed (Expected CORS error)",
           error: error instanceof Error ? error.message : "Unknown error"
         })
       }
 
-      // Test 3: OPTIONS request
+      // Test 3: Proxy with query parameters
       try {
-        console.log("Test 3: OPTIONS request")
-        const response = await fetch(`${apiUrl}/employees/cors-test`, {
-          method: 'OPTIONS'
-        })
-        results.push({
-          test: "OPTIONS preflight",
-          status: response.status === 204 ? "✅ Success" : "❌ Failed",
-          statusCode: response.status,
-          headers: Object.fromEntries(response.headers.entries())
-        })
+        console.log("Test 3: Proxy with query parameters")
+        const response = await fetch('/api/proxy/employees?page=1&limit=5')
+        if (response.ok) {
+          const data = await response.json()
+          results.push({
+            test: "Proxy with Query Params",
+            status: "✅ Success",
+            data: {
+              currentPage: data.currentPage,
+              totalPages: data.totalPages,
+              totalItems: data.totalItems,
+              dataLength: data.data?.length || 0
+            }
+          })
+        } else {
+          results.push({
+            test: "Proxy with Query Params",
+            status: "❌ Failed",
+            error: `HTTP ${response.status}`
+          })
+        }
       } catch (error) {
         results.push({
-          test: "OPTIONS preflight",
+          test: "Proxy with Query Params",
           status: "❌ Failed",
           error: error instanceof Error ? error.message : "Unknown error"
         })
@@ -97,7 +103,15 @@ export default function CorsTestPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">CORS Test Results</h1>
         
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-green-50 border border-green-200 rounded p-4 mb-6">
+          <h2 className="text-lg font-semibold text-green-800 mb-2">Proxy Solution</h2>
+          <p className="text-green-700">
+            This page tests the proxy solution that bypasses CORS by routing API requests through the frontend domain.
+            The proxy should work even if the backend CORS is not configured correctly.
+          </p>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Test Results</h2>
           
           {testResults.map((result, index) => (
@@ -112,21 +126,10 @@ export default function CorsTestPage() {
                     <strong>Error:</strong> {result.error}
                   </div>
                 )}
-                {result.statusCode && (
-                  <div className="mb-2">
-                    <strong>Status Code:</strong> {result.statusCode}
-                  </div>
-                )}
                 {result.data && (
                   <div className="mb-2">
                     <strong>Response:</strong>
                     <pre className="mt-1 text-xs bg-gray-50 p-2 rounded overflow-auto">{JSON.stringify(result.data, null, 2)}</pre>
-                  </div>
-                )}
-                {result.headers && (
-                  <div>
-                    <strong>Response Headers:</strong>
-                    <pre className="mt-1 text-xs bg-gray-50 p-2 rounded overflow-auto">{JSON.stringify(result.headers, null, 2)}</pre>
                   </div>
                 )}
               </div>
@@ -135,8 +138,28 @@ export default function CorsTestPage() {
         </div>
 
         <div className="bg-blue-50 border border-blue-200 rounded p-4 mt-6">
-          <h3 className="font-semibold mb-2">Direct API Links:</h3>
+          <h3 className="font-semibold mb-2">Test Links:</h3>
           <ul className="space-y-2">
+            <li>
+              <a 
+                href="/api/proxy/employees/cors-test" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Proxy CORS Test
+              </a>
+            </li>
+            <li>
+              <a 
+                href="/api/proxy/employees?page=1&limit=5" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Proxy Employees List
+              </a>
+            </li>
             <li>
               <a 
                 href="https://employee-directory-backend.vercel.app/api/v1/employees/cors-test" 
@@ -144,17 +167,7 @@ export default function CorsTestPage() {
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"
               >
-                CORS Test Endpoint
-              </a>
-            </li>
-            <li>
-              <a 
-                href="https://employee-directory-backend.vercel.app/api/v1/employees?page=1&limit=5" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
-              >
-                Employees List
+                Direct Backend Test (may fail with CORS)
               </a>
             </li>
           </ul>
