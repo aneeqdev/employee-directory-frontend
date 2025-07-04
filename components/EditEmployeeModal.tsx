@@ -23,7 +23,9 @@ const schema = yup.object({
   phone: yup
     .string()
     .required("Phone is required")
-    .matches(/^[+]?[1-9][\d]{0,15}$/, "Invalid phone number"),
+    .matches(/^[+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number (e.g., +1234567890 or 1234567890)")
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number cannot exceed 15 digits"),
   title: yup.string().required("Title is required"),
   department: yup.string().required("Department is required"),
   location: yup.string().required("Location is required"),
@@ -35,12 +37,13 @@ interface EditEmployeeModalProps {
   employee: Employee | null
   isOpen: boolean
   onClose: () => void
+  onSuccess: (employee: Employee, data: UpdateEmployeeDto) => void // Add success callback
 }
 
 const departments = ["Engineering", "Marketing", "Sales", "HR", "Finance", "Operations", "Design", "Product"]
 const locations = ["New York", "San Francisco", "London", "Toronto", "Berlin", "Tokyo", "Sydney", "Remote"]
 
-export default function EditEmployeeModal({ employee, isOpen, onClose }: EditEmployeeModalProps) {
+export default function EditEmployeeModal({ employee, isOpen, onClose, onSuccess }: EditEmployeeModalProps) {
   const dispatch = useDispatch<AppDispatch>()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -80,8 +83,8 @@ export default function EditEmployeeModal({ employee, isOpen, onClose }: EditEmp
     setIsSubmitting(true)
     try {
       await dispatch(updateEmployee({ id: employee.id, data })).unwrap()
-      toast.success("Employee updated successfully")
-      onClose()
+      onClose() // Close the edit modal first
+      onSuccess(employee, data) // Then trigger success modal
     } catch (error) {
       toast.error("Failed to update employee")
     } finally {
