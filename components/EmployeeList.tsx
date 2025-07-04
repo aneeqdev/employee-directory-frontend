@@ -5,38 +5,77 @@ import { useDispatch, useSelector } from "react-redux"
 import { motion, AnimatePresence } from "framer-motion"
 import type { AppDispatch, RootState } from "@/store/store"
 import { deleteEmployee, setCurrentPage, fetchEmployees } from "@/store/slices/employeeSlice"
-import type { Employee } from "@/types/employee"
+import type { Employee, UpdateEmployeeDto } from "@/types/employee"
 import EmployeeCard from "./EmployeeCard"
 import EditEmployeeModal from "./EditEmployeeModal"
 import Pagination from "./Pagination"
 import { Button } from "@/components/ui/button"
 import { Trash2, Edit } from "lucide-react"
 import { toast } from "sonner"
+import ConfirmationDialog from "./ConfirmationDialog"
+import SuccessModal from "./SuccessModal"
 
 interface EmployeeListProps {
   employees: Employee[]
   loading: boolean
+  selectedEmployees?: string[]
 }
 
-export default function EmployeeList({ employees, loading }: EmployeeListProps) {
+export default function EmployeeList({ employees, loading, selectedEmployees = [] }: EmployeeListProps) {
   const dispatch = useDispatch<AppDispatch>()
   const { pagination, filters } = useSelector((state: RootState) => state.employees)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this employee?")) {
-      try {
-        await dispatch(deleteEmployee(id)).unwrap()
-        toast.success("Employee deleted successfully")
-        dispatch(fetchEmployees({
+  // Add state for confirmation dialog
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean
+    employeeId: string
+    employeeName: string
+  }>({
+    isOpen: false,
+    employeeId: "",
+    employeeName: "",
+  })
+
+  // Add state for success modal (moved here from EditEmployeeModal)
+  const [successModal, setSuccessModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+  })
+
+  const handleDelete = (employee: Employee) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      employeeId: employee.id,
+      employeeName: `${employee.firstName} ${employee.lastName}`,
+    })
+  }
+
+  const confirmDelete = async () => {
+    try {
+      await dispatch(deleteEmployee(deleteConfirmation.employeeId)).unwrap()
+      toast.success("Employee deleted successfully")
+      dispatch(
+        fetchEmployees({
           page: pagination.currentPage,
           limit: pagination.limit,
           ...filters,
-        }))
-      } catch (error) {
-        toast.error("Failed to delete employee")
-      }
+        }),
+      )
+      setDeleteConfirmation({ isOpen: false, employeeId: "", employeeName: "" })
+    } catch (error) {
+      toast.error("Failed to delete employee")
     }
+  }
+
+  // Handle edit success
+  const handleEditSuccess = (employee: Employee, data: UpdateEmployeeDto) => {
+    setSuccessModal({
+      isOpen: true,
+      title: "Employee Updated Successfully!",
+      message: `${data.firstName} ${data.lastName}'s information has been updated.`,
+    })
   }
 
   const handlePageChange = (page: number) => {
@@ -98,7 +137,7 @@ export default function EmployeeList({ employees, loading }: EmployeeListProps) 
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDelete(employee.id)}
+                    onClick={() => handleDelete(employee)}
                     className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
@@ -121,10 +160,32 @@ export default function EmployeeList({ employees, loading }: EmployeeListProps) 
         onPageChange={handlePageChange}
       />
 
+      {/* Edit Modal */}
       <EditEmployeeModal
         employee={editingEmployee}
         isOpen={!!editingEmployee}
         onClose={() => setEditingEmployee(null)}
+        onSuccess={handleEditSuccess}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={deleteConfirmation.isOpen}
+        onClose={() => setDeleteConfirmation({ isOpen: false, employeeId: "", employeeName: "" })}
+        onConfirm={confirmDelete}
+        title="Delete Employee"
+        message={`Are you sure you want to delete ${deleteConfirmation.employeeName}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
+
+      {/* Success Modal - Now independent */}
+      <SuccessModal
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ isOpen: false, title: "", message: "" })}
+        title={successModal.title}
+        message={successModal.message}
       />
     </div>
   )

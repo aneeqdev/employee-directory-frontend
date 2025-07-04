@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { motion } from "framer-motion"
 import type { AppDispatch, RootState } from "@/store/store"
@@ -11,12 +11,35 @@ import FilterBar from "@/components/FilterBar"
 import AddEmployeeModal from "@/components/AddEmployeeModal"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-import { useState } from "react"
+import { deleteEmployee } from "@/store/slices/employeeSlice"
+import { toast } from "sonner"
+import SuccessModal from "@/components/SuccessModal"
+import type { CreateEmployeeDto } from "@/types/employee"
 
 export default function HomePage() {
   const dispatch = useDispatch<AppDispatch>()
   const { employees, loading, filters, pagination } = useSelector((state: RootState) => state.employees)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+
+  // Add state for bulk selection
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([])
+
+  // Add state for success modal (moved here from AddEmployeeModal)
+  const [successModal, setSuccessModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+  })
+
+  // Add success handler for adding employee
+  const handleAddSuccess = (data: CreateEmployeeDto) => {
+    setSuccessModal({
+      isOpen: true,
+      title: "Employee Added Successfully!",
+      message: `${data.firstName} ${data.lastName} has been added to the employee directory.`,
+    })
+  }
+
 
   useEffect(() => {
     dispatch(
@@ -51,20 +74,35 @@ export default function HomePage() {
             <div className="flex-1 w-full lg:w-auto">
               <SearchBar />
             </div>
-            <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Employee
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Employee
+              </Button>
+            </div>
           </div>
 
           <FilterBar />
         </motion.div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.2 }}>
-          <EmployeeList employees={employees} loading={loading} />
+          <EmployeeList employees={employees} loading={loading} selectedEmployees={selectedEmployees} />
         </motion.div>
 
-        <AddEmployeeModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+        {/* Add Employee Modal */}
+        <AddEmployeeModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSuccess={handleAddSuccess}
+        />
+
+        {/* Success Modal for Add Employee - Now independent */}
+        <SuccessModal
+          isOpen={successModal.isOpen}
+          onClose={() => setSuccessModal({ isOpen: false, title: "", message: "" })}
+          title={successModal.title}
+          message={successModal.message}
+        />
       </div>
     </div>
   )

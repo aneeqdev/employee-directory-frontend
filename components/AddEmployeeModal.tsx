@@ -23,7 +23,9 @@ const schema = yup.object({
   phone: yup
     .string()
     .required("Phone is required")
-    .matches(/^[+]?[1-9][\d]{0,15}$/, "Invalid phone number"),
+    .matches(/^[+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number (e.g., +1234567890 or 1234567890)")
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number cannot exceed 15 digits"),
   title: yup.string().required("Title is required"),
   department: yup.string().required("Department is required"),
   location: yup.string().required("Location is required"),
@@ -34,12 +36,13 @@ const schema = yup.object({
 interface AddEmployeeModalProps {
   isOpen: boolean
   onClose: () => void
+  onSuccess: (data: CreateEmployeeDto) => void // Add success callback
 }
 
 const departments = ["Engineering", "Marketing", "Sales", "HR", "Finance", "Operations", "Design", "Product"]
 const locations = ["New York", "San Francisco", "London", "Toronto", "Berlin", "Tokyo", "Sydney", "Remote"]
 
-export default function AddEmployeeModal({ isOpen, onClose }: AddEmployeeModalProps) {
+export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModalProps) {
   const dispatch = useDispatch<AppDispatch>()
   const { pagination, filters } = useSelector((state: RootState) => state.employees)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -62,14 +65,16 @@ export default function AddEmployeeModal({ isOpen, onClose }: AddEmployeeModalPr
     setIsSubmitting(true)
     try {
       await dispatch(createEmployee(data)).unwrap()
-      toast.success("Employee added successfully")
-      dispatch(fetchEmployees({
-        page: pagination.currentPage,
-        limit: pagination.limit,
-        ...filters,
-      }))
+      dispatch(
+        fetchEmployees({
+          page: pagination.currentPage,
+          limit: pagination.limit,
+          ...filters,
+        }),
+      )
       reset()
-      onClose()
+      onClose() // Close the add modal first
+      onSuccess(data) // Then trigger success modal
     } catch (error) {
       toast.error("Failed to add employee")
     } finally {
