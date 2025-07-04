@@ -28,7 +28,7 @@ const initialState: EmployeeState = {
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
-    limit: 10,
+    limit: 9, // Changed from 10 to 9 items per page
   },
 }
 
@@ -82,6 +82,10 @@ const employeeSlice = createSlice({
     setCurrentPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload
     },
+    setItemsPerPage: (state, action: PayloadAction<number>) => {
+      state.pagination.limit = action.payload
+      state.pagination.currentPage = 1
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -130,5 +134,5 @@ const employeeSlice = createSlice({
   },
 })
 
-export const { setSearchTerm, setFilters, clearFilters, setCurrentPage } = employeeSlice.actions
+export const { setSearchTerm, setFilters, clearFilters, setCurrentPage, setItemsPerPage } = employeeSlice.actions
 export default employeeSlice.reducer

@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 
+// Validation schema with future date prevention
 const schema = yup.object({
   firstName: yup.string().required("First name is required").min(2, "First name must be at least 2 characters"),
   lastName: yup.string().required("Last name is required").min(2, "Last name must be at least 2 characters"),
@@ -29,19 +30,32 @@ const schema = yup.object({
   title: yup.string().required("Title is required"),
   department: yup.string().required("Department is required"),
   location: yup.string().required("Location is required"),
-  hireDate: yup.string().required("Hire date is required"),
+  hireDate: yup
+    .string()
+    .required("Hire date is required")
+    .test("not-future", "Hire date cannot be in the future", (value) => {
+      if (!value) return false
+      const selectedDate = new Date(value)
+      const today = new Date()
+      today.setHours(23, 59, 59, 999) // Set to end of today
+      return selectedDate <= today
+    }),
   salary: yup.number().positive("Salary must be positive").required("Salary is required"),
 })
 
 interface AddEmployeeModalProps {
   isOpen: boolean
   onClose: () => void
-  onSuccess: (data: CreateEmployeeDto) => void // Add success callback
+  onSuccess: (data: CreateEmployeeDto) => void
 }
 
 const departments = ["Engineering", "Marketing", "Sales", "HR", "Finance", "Operations", "Design", "Product"]
 const locations = ["New York", "San Francisco", "London", "Toronto", "Berlin", "Tokyo", "Sydney", "Remote"]
 
+/**
+ * AddEmployeeModal component for creating new employees
+ * Includes form validation and prevents future hire dates
+ */
 export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModalProps) {
   const dispatch = useDispatch<AppDispatch>()
   const { pagination, filters } = useSelector((state: RootState) => state.employees)
@@ -61,7 +75,13 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
   const watchedDepartment = watch("department")
   const watchedLocation = watch("location")
 
+  /**
+   * Handles form submission with duplicate prevention
+   * @param data - Form data to submit
+   */
   const onSubmit = async (data: CreateEmployeeDto) => {
+    if (isSubmitting) return // Prevent multiple submissions
+
     setIsSubmitting(true)
     try {
       await dispatch(createEmployee(data)).unwrap()
@@ -73,8 +93,8 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
         }),
       )
       reset()
-      onClose() // Close the add modal first
-      onSuccess(data) // Then trigger success modal
+      onClose()
+      onSuccess(data)
     } catch (error) {
       toast.error("Failed to add employee")
     } finally {
@@ -82,10 +102,17 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
     }
   }
 
+  /**
+   * Handles modal close with form reset
+   */
   const handleClose = () => {
+    if (isSubmitting) return // Prevent closing during submission
     reset()
     onClose()
   }
+
+  // Get today's date in YYYY-MM-DD format for max date validation
+  const today = new Date().toISOString().split("T")[0]
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -104,7 +131,12 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name</Label>
-              <Input id="firstName" {...register("firstName")} className={errors.firstName ? "border-red-500" : ""} />
+              <Input
+                id="firstName"
+                {...register("firstName")}
+                className={errors.firstName ? "border-red-500" : ""}
+                disabled={isSubmitting}
+              />
               {errors.firstName && (
                 <motion.p
                   initial={{ opacity: 0, y: -10 }}
@@ -118,7 +150,12 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
 
             <div className="space-y-2">
               <Label htmlFor="lastName">Last Name</Label>
-              <Input id="lastName" {...register("lastName")} className={errors.lastName ? "border-red-500" : ""} />
+              <Input
+                id="lastName"
+                {...register("lastName")}
+                className={errors.lastName ? "border-red-500" : ""}
+                disabled={isSubmitting}
+              />
               {errors.lastName && (
                 <motion.p
                   initial={{ opacity: 0, y: -10 }}
@@ -133,7 +170,13 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register("email")} className={errors.email ? "border-red-500" : ""} />
+            <Input
+              id="email"
+              type="email"
+              {...register("email")}
+              className={errors.email ? "border-red-500" : ""}
+              disabled={isSubmitting}
+            />
             {errors.email && (
               <motion.p
                 initial={{ opacity: 0, y: -10 }}
@@ -147,7 +190,12 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
 
           <div className="space-y-2">
             <Label htmlFor="phone">Phone</Label>
-            <Input id="phone" {...register("phone")} className={errors.phone ? "border-red-500" : ""} />
+            <Input
+              id="phone"
+              {...register("phone")}
+              className={errors.phone ? "border-red-500" : ""}
+              disabled={isSubmitting}
+            />
             {errors.phone && (
               <motion.p
                 initial={{ opacity: 0, y: -10 }}
@@ -161,7 +209,12 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
 
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
-            <Input id="title" {...register("title")} className={errors.title ? "border-red-500" : ""} />
+            <Input
+              id="title"
+              {...register("title")}
+              className={errors.title ? "border-red-500" : ""}
+              disabled={isSubmitting}
+            />
             {errors.title && (
               <motion.p
                 initial={{ opacity: 0, y: -10 }}
@@ -176,7 +229,11 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Department</Label>
-              <Select value={watchedDepartment || ""} onValueChange={(value) => setValue("department", value)}>
+              <Select
+                value={watchedDepartment || ""}
+                onValueChange={(value) => setValue("department", value)}
+                disabled={isSubmitting}
+              >
                 <SelectTrigger className={errors.department ? "border-red-500" : ""}>
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
@@ -201,7 +258,11 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
 
             <div className="space-y-2">
               <Label>Location</Label>
-              <Select value={watchedLocation || ""} onValueChange={(value) => setValue("location", value)}>
+              <Select
+                value={watchedLocation || ""}
+                onValueChange={(value) => setValue("location", value)}
+                disabled={isSubmitting}
+              >
                 <SelectTrigger className={errors.location ? "border-red-500" : ""}>
                   <SelectValue placeholder="Select location" />
                 </SelectTrigger>
@@ -231,8 +292,10 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
               <Input
                 id="hireDate"
                 type="date"
+                max={today}
                 {...register("hireDate")}
                 className={errors.hireDate ? "border-red-500" : ""}
+                disabled={isSubmitting}
               />
               {errors.hireDate && (
                 <motion.p
@@ -252,6 +315,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
                 type="number"
                 {...register("salary")}
                 className={errors.salary ? "border-red-500" : ""}
+                disabled={isSubmitting}
               />
               {errors.salary && (
                 <motion.p
@@ -266,7 +330,13 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose} className="flex-1 bg-transparent">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              className="flex-1 bg-transparent"
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting} className="flex-1 bg-blue-600 hover:bg-blue-700">
