@@ -84,23 +84,37 @@ export default function EmployeeList({ employees, loading, selectedEmployees = [
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(6)].map((_, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-            className="bg-white rounded-lg shadow-sm border p-6 animate-pulse"
-          >
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
-              <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            </div>
-          </motion.div>
+      <div className="space-y-6">
+        {/* Loading skeleton with 3 items per row */}
+        {[...Array(3)].map((_, rowIndex) => (
+          <div key={rowIndex} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, colIndex) => (
+              <motion.div
+                key={`${rowIndex}-${colIndex}`}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: (rowIndex * 3 + colIndex) * 0.1 }}
+                className="bg-white rounded-lg shadow-sm border p-6 animate-pulse"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-2">
+                  <div className="h-3 bg-gray-200 rounded w-full"></div>
+                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <div className="h-8 bg-gray-200 rounded flex-1"></div>
+                  <div className="h-8 bg-gray-200 rounded flex-1"></div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         ))}
       </div>
     )
@@ -116,8 +130,9 @@ export default function EmployeeList({ employees, loading, selectedEmployees = [
   }
 
   return (
-    <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <div className="space-y-6">
+      {/* Employee Grid - 3 items per row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <AnimatePresence>
           {employees.map((employee, index) => (
             <motion.div
@@ -127,10 +142,17 @@ export default function EmployeeList({ employees, loading, selectedEmployees = [
               exit={{ opacity: 0, scale: 0.9, y: -20 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
               className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200"
+              data-testid="employee-card"
             >
               <EmployeeCard employee={employee}>
                 <div className="flex gap-2 mt-4">
-                  <Button variant="outline" size="sm" onClick={() => setEditingEmployee(employee)} className="flex-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingEmployee(employee)}
+                    className="flex-1"
+                    data-testid={`edit-employee-${employee.id}`}
+                  >
                     <Edit className="w-4 h-4 mr-2" />
                     Edit
                   </Button>
@@ -139,6 +161,7 @@ export default function EmployeeList({ employees, loading, selectedEmployees = [
                     size="sm"
                     onClick={() => handleDelete(employee)}
                     className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    data-testid={`delete-employee-${employee.id}`}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     Delete
@@ -150,15 +173,19 @@ export default function EmployeeList({ employees, loading, selectedEmployees = [
         </AnimatePresence>
       </div>
 
-      <div className="text-sm text-gray-600 mb-4 text-center">
-        {`Showing ${employees.length} of ${pagination.totalItems} employees`}
-      </div>
+      {/* Pagination Info and Controls */}
+      <div className="flex flex-col items-center space-y-4">
+      
 
-      <Pagination
-        currentPage={pagination.currentPage}
-        totalPages={pagination.totalPages}
-        onPageChange={handlePageChange}
-      />
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={handlePageChange}
+        />
+        <div className="text-sm text-gray-600 text-center">
+          {`Showing ${employees.length} of ${pagination.totalItems} employees`}
+        </div> 
+      </div>
 
       {/* Edit Modal */}
       <EditEmployeeModal
