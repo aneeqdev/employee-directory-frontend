@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { motion, AnimatePresence } from "framer-motion"
 import type { AppDispatch, RootState } from "@/store/store"
-import { deleteEmployee, setCurrentPage } from "@/store/slices/employeeSlice"
+import { deleteEmployee, setCurrentPage, fetchEmployees } from "@/store/slices/employeeSlice"
 import type { Employee } from "@/types/employee"
 import EmployeeCard from "./EmployeeCard"
 import EditEmployeeModal from "./EditEmployeeModal"
@@ -20,7 +20,7 @@ interface EmployeeListProps {
 
 export default function EmployeeList({ employees, loading }: EmployeeListProps) {
   const dispatch = useDispatch<AppDispatch>()
-  const { pagination } = useSelector((state: RootState) => state.employees)
+  const { pagination, filters } = useSelector((state: RootState) => state.employees)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
 
   const handleDelete = async (id: string) => {
@@ -28,6 +28,11 @@ export default function EmployeeList({ employees, loading }: EmployeeListProps) 
       try {
         await dispatch(deleteEmployee(id)).unwrap()
         toast.success("Employee deleted successfully")
+        dispatch(fetchEmployees({
+          page: pagination.currentPage,
+          limit: pagination.limit,
+          ...filters,
+        }))
       } catch (error) {
         toast.error("Failed to delete employee")
       }
@@ -104,6 +109,10 @@ export default function EmployeeList({ employees, loading }: EmployeeListProps) 
             </motion.div>
           ))}
         </AnimatePresence>
+      </div>
+
+      <div className="text-sm text-gray-600 mb-4 text-center">
+        {`Showing ${employees.length} of ${pagination.totalItems} employees`}
       </div>
 
       <Pagination

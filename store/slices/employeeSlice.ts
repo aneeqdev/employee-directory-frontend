@@ -28,7 +28,7 @@ const initialState: EmployeeState = {
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
-    limit: 9,
+    limit: 10,
   },
 }
 

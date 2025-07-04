@@ -1,13 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { motion } from "framer-motion"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
-import type { AppDispatch } from "@/store/store"
-import { createEmployee } from "@/store/slices/employeeSlice"
+import type { AppDispatch, RootState } from "@/store/store"
+import { createEmployee, fetchEmployees } from "@/store/slices/employeeSlice"
 import type { CreateEmployeeDto } from "@/types/employee"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -41,6 +41,7 @@ const locations = ["New York", "San Francisco", "London", "Toronto", "Berlin", "
 
 export default function AddEmployeeModal({ isOpen, onClose }: AddEmployeeModalProps) {
   const dispatch = useDispatch<AppDispatch>()
+  const { pagination, filters } = useSelector((state: RootState) => state.employees)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const {
@@ -62,6 +63,11 @@ export default function AddEmployeeModal({ isOpen, onClose }: AddEmployeeModalPr
     try {
       await dispatch(createEmployee(data)).unwrap()
       toast.success("Employee added successfully")
+      dispatch(fetchEmployees({
+        page: pagination.currentPage,
+        limit: pagination.limit,
+        ...filters,
+      }))
       reset()
       onClose()
     } catch (error) {
